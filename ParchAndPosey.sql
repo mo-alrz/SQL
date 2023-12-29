@@ -562,3 +562,114 @@ SELECT DISTINCT id, name
 FROM accounts;
 
 --Have any sales reps worked on more than one account?
+--Actually all of the sales reps have worked on more than one account. The fewest number of accounts any sales rep works
+--on is 3. There are 50 sales reps, and they all have more than one account. Using DISTINCT in the second query assures
+--that all of the sales reps are accounted for in the first query.
+SELECT s.id, s.name, COUNT(*) num_accounts
+FROM accounts a
+JOIN sales_reps s
+ON s.id = a.sales_rep_id
+GROUP BY s.id, s.name
+ORDER BY num_accounts;
+
+--and
+
+SELECT DISTINCT id, name
+FROM sales_reps;
+
+--Having
+--WHERE subsets the returned data based on a logical condition.
+--WHERE appears after the FROM, JOIN, and ON clauses, but before GROUP BY.
+--HAVING appears after the GROUP BY clause, but before the ORDER BY clause.
+--HAVING is like WHERE, but it works on logical statements involving aggregations.
+--How many of the sales reps have more than 5 accounts that they manage?
+SELECT COUNT(*) num_reps_above5
+FROM (SELECT s.id sales_id, COUNT(a.id) acc_num
+      FROM accounts a
+      JOIN sales_reps s
+      ON a.sales_rep_id = s.id
+      GROUP BY sales_id
+      HAVING COUNT(a.id) > 5
+      ORDER BY acc_num) AS table1;
+
+--How many accounts have more than 20 orders?
+SELECT a.id acc_id, COUNT(o.id) ord_num
+FROM accounts a
+JOIN orders o
+ON a.id = o.account_id
+GROUP BY acc_id
+HAVING COUNT(o.id) > 20
+ORDER BY ord_num;
+
+--Which account has the most orders?
+SELECT a.id acc_id, COUNT(o.id) ord_num
+FROM accounts a
+JOIN orders o
+ON a.id = o.account_id
+GROUP BY acc_id
+ORDER BY COUNT(o.id)DESC
+LIMIT 1;
+
+--Which accounts spent more than 30,000 usd total across all orders?
+SELECT a.id, SUM(o.total_amt_usd) total_payments
+FROM accounts a
+JOIN orders o
+ON a.id = o.account_id
+GROUP BY a.id
+HAVING SUM(o.total_amt_usd) > 30000
+ORDER BY total_payments;
+
+--Which accounts spent less than 1,000 usd total across all orders?
+SELECT a.id, SUM(o.total_amt_usd) total_payments
+FROM accounts a
+JOIN orders o
+ON a.id = o.account_id
+GROUP BY a.id
+HAVING SUM(o.total_amt_usd) < 1000
+ORDER BY total_payments;
+
+--Which account has spent the most with us?
+SELECT a.id, a.name, SUM(o.total_amt_usd) total_spent
+FROM accounts a
+JOIN orders o
+ON a.id = o.account_id
+GROUP BY a.id, a.name
+ORDER BY total_spent DESC
+LIMIT 1;
+
+--Which account has spent the least with us?
+SELECT a.id, a.name, SUM(o.total_amt_usd) total_spent
+FROM accounts a
+JOIN orders o
+ON a.id = o.account_id
+GROUP BY a.id, a.name
+ORDER BY total_spent
+LIMIT 1;
+
+--Which accounts used facebook as a channel to contact customers more than 6 times?
+SELECT a.id, w.channel, COUNT(w.channel) count_of_channel
+FROM accounts a
+JOIN web_events w
+ON a.id = w.account_id
+GROUP BY a.id,w.channel
+HAVING w.channel = 'facebook' AND COUNT(w.channel) > 6
+ORDER BY count_of_channel DESC;
+
+--Which account used facebook most as a channel?
+SELECT a.id, w.channel, COUNT(w.channel) count_of_channel
+FROM accounts a
+JOIN web_events w
+ON a.id = w.account_id
+WHERE w.channel = 'facebook'
+GROUP BY a.id,w.channel
+ORDER BY count_of_channel DESC
+LIMIT 1;
+
+--Which channel was most frequently used by most accounts?
+SELECT a.id, a.name, w.channel, COUNT(*) use_of_channel
+FROM accounts a
+JOIN web_events w
+ON a.id = w.account_id
+GROUP BY a.id, a.name, w.channel
+ORDER BY use_of_channel DESC
+LIMIT 10;
