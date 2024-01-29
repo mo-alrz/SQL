@@ -114,18 +114,117 @@ FROM (
 WHERE science > math
 ORDER BY 3 DESC,1;
 
---For this challenge you need to create a RECURSIVE Hierarchical query. You have a table employees of employees, you must
---order each employee by level. You must use a WITH statement and name it employee_levels after that has been defined you must select from it.
---A Level is in correlation what manager managers the employee. e.g. an employee with a manager_id of NULL is at level 1
---and then direct employees with the employee at level 1 will be level 2.
---employees table schema
---    id
---    first_name
---    last_name
---    manager_id (can be NULL)
---resultant schema
---    level
---    id
---    first_name
---    last_name
---    manager_id (can be NULL)
+--You need to write a sql query that will return the daily balance history from monetary operations tables for all the time.
+--The balance of the day (end day balance) is equal to the balance at the begin of the day with total amount of operations during the day added. The balance at the begin of the day is equal to the balance at the end of the previous day. The balance before the very first operation is zero.
+--Input
+--operations
+
+-- Column    |  Type      |
+-------------+------------+
+-- amount    | numeric    |
+-- date      | timestamp  |
+
+--    amount             date
+----------------------------------------+
+--502.944042810036   2020-01-01T00:01:00.000+00:00
+--1101.5004691791    2020-01-01T00:02:00.000+00:00
+--1618.92180791447   2020-01-01T00:03:00.000+00:00
+---1656.39770507234  2020-01-02T10:01:00.000+00:00
+--656.39770507234    2020-01-03T00:05:00.000+00:00
+---656.39770507234   2020-01-03T00:07:00.000+00:00
+--613.944042810036   2020-01-04T01:01:00.000+00:00
+--..
+
+--Output
+
+-- Column    |  Type      |
+-------------+------------+
+-- date      | date       |
+-- balance   | numeric    |
+
+--  date    |   balance
+----------------------------+
+--2020-01-01  3223.3663199036064
+--2020-01-02  1566.9686148312664
+--2020-01-03  1566.9686148312664
+--..
+SELECT DISTINCT(date::date) date, SUM(amount) OVER (ORDER BY date::date) balance
+FROM operations
+ORDER BY 1;
+
+--Your classmates asked you to copy some paperwork for them. You know that there are 'n' classmates and the paperwork has 'm' pages.
+--Your task is to calculate how many blank pages do you need. If n < 0 or m < 0 return 0.
+--Example:
+--n= 5, m=5: 25
+--n=-5, m=5:  0
+SELECT n, m,
+       CASE WHEN n > 0 and m > 0 THEN n * m
+       ELSE 0 END AS res
+FROM paperwork;
+
+--It's pretty straightforward. Your goal is to create a function that removes the first and last characters of a string.
+--You're given one parameter, the original string. You don't have to worry about strings with less than two characters.
+SELECT s,CASE WHEN LENGTH(s) >= 2 THEN SUBSTRING(s,2,LENGTH(s)-2)
+         ELSE NULL END AS res
+FROM removechar;
+
+--The first century spans from the year 1 up to and including the year 100, the second century - from the year 101 up to and including the year 200, etc.
+--Task
+--Given a year, return the century it is in.
+--Examples
+
+--1705 --> 18
+--1900 --> 19
+--1601 --> 17
+--2000 --> 20
+--2742 --> 28
+
+--In SQL, you will be given a table years with a column yr for the year. Return a table with a column century.
+SELECT yr, CASE WHEN yr % 100 = 0 THEN (yr/100)::INTEGER
+           ELSE (yr/100)::INTEGER +1 END AS century
+FROM years;
+
+--Create a function with two arguments that will return an array of the first n multiples of x.
+--Assume both the given number and the number of times to count will be positive numbers greater than 0.
+--Return the results as an array or list ( depending on language ).
+--Examples
+--countBy(1,10)  should return  {1,2,3,4,5,6,7,8,9,10}
+--countBy(2,5)  should return {2,4,6,8,10}
+--you are given a table 'counter' with columns 'x' (int) and 'n' (int)
+--return a query with columns 'x', 'n' and your result in a column named 'res' (array)
+--sort results by column 'x' ascending, then by 'n' ascending
+--note that each pair of 'x' and 'n' in 'counter' is unique
+SELECT x, n, ARRAY(SELECT generate_series(1, n) * x) AS res
+FROM counter
+ORDER BY 1,2;
+
+--You need to create a function that calculates the number of weekdays (Monday through Friday) between two dates inclusively.
+--The function should be named weekdays accept two arguments of type DATE and return an INTEGER value.
+--weekdays(DATE, DATE) INTEGER
+--The order of arguments shouldn't matter. To illustrate both of the following queries
+--SELECT weekdays('2016-01-01', '2016-01-10');
+--SELECT weekdays('2016-01-10', '2016-01-01');
+CREATE OR REPLACE FUNCTION weekdays(date1 DATE, date2 DATE)
+RETURNS INTEGER AS $$
+DECLARE
+    int_val INTEGER;
+BEGIN
+    int_val := (
+        SELECT COUNT(*)
+        FROM generate_series(
+            LEAST(date1, date2),
+            GREATEST(date1, date2),
+            interval '1 day'
+        ) AS date_sequence
+        WHERE EXTRACT(DOW FROM date_sequence) BETWEEN 1 AND 5
+    );
+
+    RETURN int_val;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
