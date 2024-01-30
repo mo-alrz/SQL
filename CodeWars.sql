@@ -278,5 +278,45 @@ SELECT * FROM (SELECT student_id,
                       GROUP BY 1,2 ) t2 ) t3
 WHERE reason IS NOT NULL;
 
+--For this challenge you need to PIVOT data. You have two tables, products and details. Your task is to pivot the rows in
+--products to produce a table of products which have rows of their detail. Group and Order by the name of the Product.
+--Tables and relationship below:
+--products table schema
+--- id   - integer
+--- name - text
+--details table schema
+--- id          - integer
+--- product_id  - integer
+--- detail      - text
+--You must use the CROSSTAB statement to create a table that has the schema as below:
+--CROSSTAB table schema
+--- name  - text
+--- bad   - bigint
+--- good  - bigint
+--- ok    - bigint
+--If the values aren't assigned to the last three columns within the query directly, it's assumed they will be presented
+--in the lexicographical order (i.e. if we have three values, a, b and c, then bad, good and ok will have these values respectively).
+SELECT name,
+       MAX(CASE WHEN detail = 'bad' THEN num END) AS bad,
+       MAX(CASE WHEN detail = 'good' THEN num END) AS good,
+       MAX(CASE WHEN detail = 'ok' THEN num END) AS ok
+FROM( SELECT name, detail,COUNT(detail) num
+      FROM products p
+      JOIN details d
+      ON p.id = d.product_id
+      GROUP BY 1,2
+      ORDER by 1 ) t1
+GROUP BY 1;
+
+--OR With Pivot table
+SELECT *
+FROM  crosstab(
+      'SELECT p.name, detail, COUNT(d.id)
+       FROM products p
+       JOIN details d
+       ON p.id = d.product_id
+       GROUP BY p.name, d.detail
+       ORDER BY 1,2')
+AS ct (name text, bad bigint, good bigint, ok bigint)
 
 
